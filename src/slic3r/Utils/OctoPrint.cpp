@@ -9,6 +9,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/nowide/args.hpp>
+#include <boost/nowide/fstream.hpp>
+#include <boost/nowide/iostream.hpp>
 
 #include <wx/progdlg.h>
 
@@ -211,7 +214,7 @@ std::string OctoPrint::make_url(const std::string& path, const std::string& addr
     }
 }
 
-SL1Host::SL1Host(DynamicPrintConfig *config) : 
+SL1Host::SL1Host(DynamicPrintConfig *config) :
     OctoPrint(config),
     m_authorization_type(dynamic_cast<const ConfigOptionEnum<AuthorizationType>*>(config->option("printhost_authorization_type"))->value),
     m_username(config->opt_string("printhost_user")),

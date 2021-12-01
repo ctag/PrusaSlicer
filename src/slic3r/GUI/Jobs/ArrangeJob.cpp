@@ -23,7 +23,7 @@ public:
     explicit WipeTower(const GLCanvas3D::WipeTowerInfo &wti)
         : GLCanvas3D::WipeTowerInfo(wti)
     {}
-    
+
     explicit WipeTower(GLCanvas3D::WipeTowerInfo &&wti)
         : GLCanvas3D::WipeTowerInfo(std::move(wti))
     {}
@@ -33,7 +33,7 @@ public:
         m_pos = unscaled(tr); m_rotation = rotation;
         apply_wipe_tower();
     }
-    
+
     ArrangePolygon get_arrange_polygon() const
     {
         Polygon ap({
@@ -42,7 +42,7 @@ public:
             {scaled(m_bb.max)},
             {scaled(m_bb.min.x()), scaled(m_bb.max.y())}
             });
-        
+
         ArrangePolygon ret;
         ret.poly.contour = std::move(ap);
         ret.translation  = scaled(m_pos);
@@ -61,12 +61,12 @@ static WipeTower get_wipe_tower(const Plater &plater)
 void ArrangeJob::clear_input()
 {
     const Model &model = m_plater->model();
-    
+
     size_t count = 0, cunprint = 0; // To know how much space to reserve
     for (auto obj : model.objects)
         for (auto mi : obj->instances)
             mi->printable ? count++ : cunprint++;
-    
+
     m_selected.clear();
     m_unselected.clear();
     m_unprintable.clear();
@@ -78,7 +78,7 @@ void ArrangeJob::clear_input()
 
 void ArrangeJob::prepare_all() {
     clear_input();
-    
+
     for (ModelObject *obj: m_plater->model().objects)
         for (ModelInstance *mi : obj->instances) {
             ArrangePolygons & cont = mi->printable ? m_selected : m_unprintable;
@@ -91,28 +91,28 @@ void ArrangeJob::prepare_all() {
 
 void ArrangeJob::prepare_selected() {
     clear_input();
-    
+
     Model &model = m_plater->model();
     double stride = bed_stride(m_plater);
-    
+
     std::vector<const Selection::InstanceIdxsList *>
             obj_sel(model.objects.size(), nullptr);
-    
+
     for (auto &s : m_plater->get_selection().get_content())
         if (s.first < int(obj_sel.size()))
             obj_sel[size_t(s.first)] = &s.second;
-    
+
     // Go through the objects and check if inside the selection
     for (size_t oidx = 0; oidx < model.objects.size(); ++oidx) {
         const Selection::InstanceIdxsList * instlist = obj_sel[oidx];
         ModelObject *mo = model.objects[oidx];
-        
+
         std::vector<bool> inst_sel(mo->instances.size(), false);
-        
+
         if (instlist)
             for (auto inst_id : *instlist)
                 inst_sel[size_t(inst_id)] = true;
-        
+
         for (size_t i = 0; i < inst_sel.size(); ++i) {
             ModelInstance * mi = mo->instances[i];
             ArrangePolygon &&ap = get_arrange_poly_(mi);
@@ -121,11 +121,11 @@ void ArrangeJob::prepare_selected() {
                         (inst_sel[i] ? m_selected :
                                        m_unselected) :
                         m_unprintable;
-            
+
             cont.emplace_back(std::move(ap));
         }
     }
-    
+
     if (auto wti = get_wipe_tower(*m_plater)) {
         ArrangePolygon &&ap = get_arrange_poly(wti, m_plater);
 
@@ -133,10 +133,10 @@ void ArrangeJob::prepare_selected() {
                                                                  m_unselected;
         cont.emplace_back(std::move(ap));
     }
-    
+
     // If the selection was empty arrange everything
     if (m_selected.empty()) m_selected.swap(m_unselected);
-    
+
     // The strides have to be removed from the fixed items. For the
     // arrangeable (selected) items bed_idx is ignored and the
     // translation is irrelevant.
@@ -183,9 +183,9 @@ void ArrangeJob::process()
 
     auto count = unsigned(m_selected.size() + m_unprintable.size());
     Points bedpts = get_bed_shape(*m_plater->config());
-    
+
     params.stopcondition = [this]() { return was_canceled(); };
-    
+
     params.progressind = [this, count](unsigned st) {
         st += m_unprintable.size();
         if (st > 0) update_status(int(count - st), arrangestr);
@@ -218,20 +218,20 @@ static std::string concat_strings(const std::set<std::string> &strings,
 void ArrangeJob::finalize() {
     // Ignore the arrange result if aborted.
     if (was_canceled()) return;
-    
+
     // Unprintable items go to the last virtual bed
     int beds = 0;
-    
+
     // Apply the arrange result to all selected objects
     for (ArrangePolygon &ap : m_selected) {
         beds = std::max(ap.bed_idx, beds);
         ap.apply();
     }
-    
+
     // Get the virtual beds from the unselected items
     for (ArrangePolygon &ap : m_unselected)
         beds = std::max(ap.bed_idx, beds);
-    
+
     // Move the unprintable items to the last virtual bed.
     for (ArrangePolygon &ap : m_unprintable) {
         ap.bed_idx += beds + 1;
@@ -282,6 +282,7 @@ arrangement::ArrangeParams get_arrange_params(Plater *p)
 
     arrangement::ArrangeParams params;
     params.allow_rotations  = settings.enable_rotation;
+    params.wear_leveling 	= settings.enable_wearLeveling;
     params.min_obj_distance = scaled(settings.distance);
 
     return params;

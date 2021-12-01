@@ -213,7 +213,7 @@ class GLCanvas3D
 
         mutable float               m_adaptive_quality{ 0.5f };
         mutable HeightProfileSmoothingParams m_smooth_params;
-        
+
         static float                s_overlay_window_width;
 
         struct LayersTexture
@@ -281,7 +281,7 @@ class GLCanvas3D
         void update_slicing_parameters();
 
         static float thickness_bar_width(const GLCanvas3D &canvas);
-        
+
     };
 
     struct Mouse
@@ -444,6 +444,7 @@ public:
 //        float distance_sla       = 6.;
         float accuracy           = 0.65f; // Unused currently
         bool  enable_rotation    = false;
+        bool enable_wearLeveling = false; // Randomize location on arrange
     };
 
 private:
@@ -580,7 +581,7 @@ private:
     private:
         GLCanvas3D*             m_canvas{ nullptr };
         int				        m_blink_counter{ 0 };
-        ToolbarHighlighterTimer m_timer;       
+        ToolbarHighlighterTimer m_timer;
     }
     m_toolbar_highlighter;
 
@@ -773,7 +774,7 @@ public:
     int get_move_volume_id() const { return m_mouse.drag.move_volume_idx; }
     int get_first_hover_volume_idx() const { return m_hover_volume_idxs.empty() ? -1 : m_hover_volume_idxs.front(); }
     void set_selected_extruder(int extruder) { m_selected_extruder = extruder;}
-    
+
     class WipeTowerInfo {
     protected:
         Vec2d m_pos = {std::nan(""), std::nan("")};
@@ -781,18 +782,18 @@ public:
         BoundingBoxf m_bb;
         friend class GLCanvas3D;
 
-    public:        
+    public:
         inline operator bool() const {
             return !std::isnan(m_pos.x()) && !std::isnan(m_pos.y());
         }
-        
+
         inline const Vec2d& pos() const { return m_pos; }
         inline double rotation() const { return m_rotation; }
         inline const Vec2d bb_size() const { return m_bb.size(); }
-        
+
         void apply_wipe_tower() const;
     };
-    
+
     WipeTowerInfo get_wipe_tower_info() const;
 
     // Returns the view ray line, in world coordinate, at the given mouse position.
@@ -807,7 +808,7 @@ public:
     void msw_rescale();
 
     void request_extra_frame() { m_extra_frame_requested = true; }
-    
+
     void schedule_extra_frame(int miliseconds);
 
     float get_main_toolbar_height() { return m_main_toolbar.get_height(); }
